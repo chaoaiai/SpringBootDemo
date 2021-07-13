@@ -1,4 +1,4 @@
-package com.example.SpringBootDemo;
+package com.example.SpringBootDemo.controller;
 
 import com.example.SpringBootDemo.model.Student;
 import com.example.SpringBootDemo.repository.StudentRepository;
