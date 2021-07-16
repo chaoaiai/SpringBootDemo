@@ -15,6 +15,14 @@ public class StudentServiceImpl implements StudentService {
     private StudentRepository ors;
     @Override
     public Student findById(String id) {
+//        try
+//        {
+//            System.out.println("dao阻塞");
+//            Thread.sleep(10000);
+//        }
+//        catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         return ors.findById(id);
     }
 }

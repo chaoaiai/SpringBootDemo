@@ -36,7 +36,7 @@ public class StudentController {
     }
 
     @RequestMapping("/getOrderById")
-    public Student getOrderById(String id){
+    public Student getOrderById(String id,String host){
         //连接本地的 Redis 服务
         Jedis jedis = RedisUtil.getJedis();
         if(jedis == null){
@@ -45,27 +45,38 @@ public class StudentController {
         Map<String,String> mapStudent = jedis.hgetAll("getOrderById_"+id);
         Student student;
         if(mapStudent.isEmpty()){
-            student = ors.findById(id);
-            Map<String,String> map = new HashMap<>();
-            if(student != null){
-                map.put("id",student.getId());
-                map.put("title",student.getTitle());
-                jedis.hset("getOrderById_"+id,map);
-                jedis.expire("getOrderById_"+id,60);
-                System.out.println("mysql查询 有数据");
-            }else{
-                map.put("id","");
-                map.put("title","");
-                jedis.hset("getOrderById_"+id,map);
-                jedis.expire("getOrderById_"+id,60);
-                System.out.println("mysql查询 无数据");
-                student = new Student();
+            //加锁的目的是防止过多的查询走到数据库层
+            synchronized (this){
+                mapStudent = jedis.hgetAll("getOrderById_"+id);
+                if(mapStudent.isEmpty()){
+                    student = ors.findById(id);
+                    Map<String,String> map = new HashMap<>();
+                    if(student != null){
+                        map.put("id",student.getId());
+                        map.put("title",student.getTitle());
+                        jedis.hset("getOrderById_"+id,map);
+                        jedis.expire("getOrderById_"+id,60);
+                        System.out.println("mysql查询 有数据");
+                    }else{
+                        map.put("id","");
+                        map.put("title","");
+                        jedis.hset("getOrderById_"+id,map);
+                        jedis.expire("getOrderById_"+id,60);
+                        System.out.println("mysql查询 无数据");
+                        student = new Student();
+                    }
+                }else{
+                    student = new Student();
+                    student.setId(mapStudent.get("id"));
+                    student.setTitle(mapStudent.get("title"));
+                    System.out.println("锁内redis查询");
+                }
             }
         }else{
             student = new Student();
             student.setId(mapStudent.get("id"));
             student.setTitle(mapStudent.get("title"));
-            System.out.println("redis查询");
+            System.out.println("锁外redis查询");
         }
         return student;
 //        使用的是jackjson
