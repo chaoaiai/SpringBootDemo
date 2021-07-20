@@ -1,9 +1,11 @@
 package com.example.SpringBootDemo.controller;
 
+import com.example.SpringBootDemo.feign.OrderFeignClient;
 import com.example.SpringBootDemo.model.Student;
 import com.example.SpringBootDemo.redis.RedisUtil;
 import com.example.SpringBootDemo.repository.StudentRepository;
 import com.example.SpringBootDemo.service.StudentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +27,9 @@ public class StudentController {
     private StudentService ors;
     //连接本地的 Redis 服务
     Jedis jedis = RedisUtil.getJedis();
+    //这里直接注入feign client
+    @Autowired
+    private OrderFeignClient orderFeignClient;
 
     @RequestMapping("/getOrder")
     public Student hello(){
@@ -83,6 +88,12 @@ public class StudentController {
 //        return ors.findById(id);
     }
 
+    @RequestMapping("/getOrderByIdOnFeign")
+    public Student getOrderByIdOnFeign(String id){
+        Student student = orderFeignClient.getOrder(id);
+        return student;
+
+    }
 //    @RequestMapping("/findAll")
 //    public List<Student> findAll(){
 //        return ors.findAll();
